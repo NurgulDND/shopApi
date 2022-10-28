@@ -6,6 +6,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from account.models import SpamContacts
+
 User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -72,3 +74,18 @@ class RestorePasswordSerializer(serializers.Serializer):
 		user.activation_code = ''
 		user.save()
 		return user
+
+#для спама
+class SpamViewSerializer(serializers.ModelSerializer):
+	email = serializers.ReadOnlyField()
+
+	class Meta:
+		model = SpamContacts
+		fields = "__all__"
+
+	def validate(self, attrs):
+		email = self.context['request'].user.email
+		if SpamContacts.objects.filter(email=email).exists():
+			raise serializers.ValidationError('You are already followed to spam!')
+		return attrs
+
